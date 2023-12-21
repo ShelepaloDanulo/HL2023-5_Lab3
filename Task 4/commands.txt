@@ -1,0 +1,5 @@
+docker-compose exec router mongosh --port 27017 --eval "sh.shardCollection('london.rides', {_id: 'hashed'})"
+
+docker-compose exec router mongoimport --port 27017 -d london -c rides --type csv --file "/data/rides.csv" --headerline
+
+docker-compose exec router mongosh --port 27017 --eval "db = db.getSiblingDB('london'); var badFeedbackCategories = ['awful service', 'bad car', 'unpleasant companion', 'dirty', 'non-expert navigation', 'not recommend']; var agg_base = db.rides.aggregate([{'$match': {'category_driver_feedback': {'$in': badFeedbackCategories}}}, {'$group': {'_id': '$category_driver_feedback', 'count': {'$sum': 1}}}, {'$sort': {'count': -1}}, {'$limit': 1}]); if (agg_base.hasNext()) {printjson(agg_base.next());}"
